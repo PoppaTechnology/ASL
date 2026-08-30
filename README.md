@@ -19,24 +19,6 @@ A real-time computer-vision application that recognizes American Sign Language h
 
 ## How it works
 
-The application follows this pipeline:
-
-```text
-Webcam frame
-    ↓
-Horizontal flip for mirrored preview
-    ↓
-MediaPipe hand-landmark detection
-    ↓
-Feature extraction from landmark coordinates
-    ↓
-Pre-trained sign classification model
-    ↓
-Rolling-window stability check
-    ↓
-On-screen label + text-to-speech output
-```
-
 Detection and prediction run every second frame by default (`PROCESS_EVERY_N = 2`). Cached landmarks and predictions are rendered on skipped frames to keep the preview responsive. A prediction history window of 10 processed frames is used, and at least 7 matching predictions are required before a sign is considered stable.
 
 ## Requirements
@@ -59,7 +41,7 @@ Clone or extract the project, then create and activate a virtual environment:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate        # macOS/Linux
-# .venv\\Scripts\\activate     # Windows PowerShell
+# .venv\Scripts\activate         # Windows
 ```
 
 Install the pinned dependencies:
@@ -78,15 +60,9 @@ The source expects two model assets in the same directory as `app.py`:
 | File | Purpose | Included in archive? |
 |---|---|:---:|
 | `hand_landmarker.task` | MediaPipe hand-landmark detector model. | Yes |
-| `sign_language_model.p` | Serialized sign classifier loaded with `joblib.load`. | No |
+| `sign_language_model.p` | Serialized sign classifier loaded with `joblib.load`. | Yes |
 
-The application exits during startup if either file is missing. Place a compatible classifier at:
-
-```text
-sign_language_model.p
-```
-
-The classifier must accept the feature layout produced by `extract_features`. If the model exposes `feature_names_in_` and any feature name begins with `z`, the application supplies 63 values per hand landmark (`x`, `y`, and `z`). Otherwise, it assumes a 42-feature x/y-only layout. The model’s output labels are displayed and sent to the speech engine as strings.
+The application exits during startup if either file is missing.
 
 ## Running the application
 
@@ -127,17 +103,13 @@ For slower hardware, increasing `PROCESS_EVERY_N` may reduce CPU usage. For fast
 .
 ├── app.py                  # Webcam loop, recognition, stabilization, and speech output
 ├── hand_landmarker.task    # MediaPipe hand-landmark model asset
-├── sign_language_model.p   # Required serialized classifier; not included in archive
+├── sign_language_model.p   # Required serialized classifier
 ├── requirements.txt        # Pinned Python dependencies
 ├── README.md               # Project documentation
 └── .gitattributes          # Git attribute configuration
 ```
 
 ## Troubleshooting
-
-### `Model file not found: sign_language_model.p`
-
-The classifier file is not included in the archive. Add a compatible joblib/pickle model named exactly `sign_language_model.p` to the project root, or update `MODEL_PATH` in `app.py`.
 
 ### `Landmarker model not found: hand_landmarker.task`
 
@@ -164,21 +136,3 @@ The application deliberately waits for a stable prediction before speaking. Adju
 This implementation recognizes individual model classes rather than translating continuous ASL language. It processes one hand only, does not model facial expressions or body pose, and does not provide grammar-aware sentence translation. The classifier and its training labels are not included, so the supported sign vocabulary cannot be determined from the application source alone.
 
 Because the application uses a local webcam and local speech synthesis, camera frames are processed locally by the running process unless the classifier or environment is separately configured to transmit data. Users should still review their operating-system permissions and avoid capturing people without appropriate consent.
-
-## Development suggestions
-
-Useful next steps include adding the missing classifier asset or a training pipeline, documenting the model’s label vocabulary, supporting configurable camera indices, adding a command-line configuration interface, writing automated tests for feature extraction and stabilization, and improving platform-specific installation instructions for text-to-speech backends.
-
-## License
-
-No license file is included in the project archive. Add an appropriate license before redistributing or publishing the application.
-
-## References
-
-[1]: https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/python "MediaPipe Hand Landmarker for Python"
-
-[2]: https://docs.opencv.org/ "OpenCV documentation"
-
-[3]: https://scikit-learn.org/stable/ "scikit-learn documentation"
-
-[4]: https://pyttsx3.readthedocs.io/ "pyttsx3 documentation"
